@@ -1,5 +1,5 @@
 #include <iostream>
-#include <time.h>
+#include <ctime>
 #include "host.h"
 
 Host_10::Host_10(void* target, HostCallback* callback, RemoteBuffer* remote_buffer) {
@@ -19,7 +19,7 @@ void Host_10::SetTimer(int64_t delay_ms, void* context) {
 
 cdm::Time Host_10::GetCurrentWallTime() {
   std::cout << "GetCurrentWallTime";
-  return std::time(0);
+  return time(0);
 }
 
 void Host_10::OnInitialized(bool success) {
@@ -103,7 +103,7 @@ void Host_10::OnExpirationChange(
   uint32_t session_id_size,
   cdm::Time new_expiry_time
 ) {
-  std::cout << "OnExpirationChange";
+  std::cout << "OnExpirationChange";
 }
 
 void Host_10::OnSessionClosed(
