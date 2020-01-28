@@ -1,0 +1,12 @@
+[package]
+name = "widevine_rs"
+version = "0.1.0"
+authors = ["Félix Léveillé <flxleveille@gmail.com>"]
+edition = "2018"
+build = "build.rs"
+
+[build-dependencies]
+cc = "1.0.50"
+
+[dependencies]
+tokio = { version = "0.2.9", features = ["full"] }
