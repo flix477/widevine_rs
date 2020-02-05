@@ -1,5 +1,5 @@
 mod cdm;
-mod decryption;
+pub mod decryption;
 mod host;
 mod library;
 mod promise_set;
@@ -29,6 +29,7 @@ pub enum CreateSessionError {
 pub struct WidevineAPI {
     cdm: CDM,
     host: Box<Host>,
+    #[allow(dead_code)]
     library: Library,
     promise_set: PromiseSet,
 }
@@ -102,7 +103,7 @@ impl WidevineAPI {
     ) -> Result<(), RejectionInfo> {
         let promise_id = self.promise_set.create();
         self.cdm.update_session(promise_id, session_id, response);
-        let result = self.host.get_future(promise_id).await.as_result()?;
+        let _result = self.host.get_future(promise_id).await.as_result()?;
         self.promise_set.pop(promise_id);
         Ok(())
     }

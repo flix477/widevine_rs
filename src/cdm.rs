@@ -1,4 +1,4 @@
-use crate::decryption::InputBuffer;
+use crate::decryption::{CDMInputBuffer, InputBuffer};
 use crate::decryption::{DecryptionResult, Status};
 use crate::host::Host;
 use crate::types::{InitDataType, SessionType};
@@ -32,7 +32,7 @@ extern "C" {
         response: *const c_uchar,
         response_size: c_uint,
     );
-    fn CDM_Decrypt(cdm: *mut c_void, encrypted_buffer: InputBuffer) -> DecryptionResult;
+    fn CDM_Decrypt(cdm: *mut c_void, encrypted_buffer: CDMInputBuffer) -> DecryptionResult;
     fn DeinitializeCDM(cdm: *mut c_void);
 }
 
@@ -97,7 +97,7 @@ impl CDM {
 
     // TODO: not nicely typed because Status::Success exists
     pub fn decrypt(&mut self, input: InputBuffer) -> Result<Vec<u8>, Status> {
-        let mut result = unsafe { CDM_Decrypt(self.0, input) };
+        let result = unsafe { CDM_Decrypt(self.0, input.into()) };
         if let Status::Success = result.status {
             let data = unsafe {
                 Vec::from_raw_parts(result.data, result.size as usize, result.capacity as usize)

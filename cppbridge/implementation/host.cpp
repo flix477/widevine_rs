@@ -18,7 +18,6 @@ void Host_10::SetTimer(int64_t delay_ms, void* context) {
 }
 
 cdm::Time Host_10::GetCurrentWallTime() {
-  std::cout << "GetCurrentWallTime";
   return time(0);
 }
 
@@ -38,7 +37,6 @@ void Host_10::OnResolveNewSessionPromise(
   const char* session_id,
   uint32_t session_id_size
 ) {
-  std::cout << "OnResolveNewSessionPromise";
   this->callback->on_resolve_new_session(
     promise_id,
     session_id,
@@ -48,7 +46,6 @@ void Host_10::OnResolveNewSessionPromise(
 }
 
 void Host_10::OnResolvePromise(uint32_t promise_id) {
-  std::cout << "OnResolve";
   this->callback->on_resolve(promise_id, this->target);
 }
 
@@ -59,7 +56,6 @@ void Host_10::OnRejectPromise(
   const char* error_message,
   uint32_t error_message_size
 ) {
-  std::cout << "OnReject";
   this->callback->on_reject(
     promise_id,
     exception,
@@ -77,7 +73,6 @@ void Host_10::OnSessionMessage(
   const char* message,
   uint32_t message_size
 ) {
-  std::cout << "OnSessionMessage";
   this->callback->on_session_message(
     session_id,
     session_id_size,
@@ -147,5 +142,4 @@ void Host_10::RequestStorageId(uint32_t version) {
 }
 
 Host_10::~Host_10() {
-  std::cout << "Deleting host\n";
 }

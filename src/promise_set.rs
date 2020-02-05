@@ -65,7 +65,7 @@ impl PromiseSet {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct PromiseManager {
     pub finished_promises: HashMap<usize, PromiseResult>,
     pub on_finished_promises: HashMap<usize, Waker>,

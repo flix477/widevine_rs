@@ -142,7 +142,11 @@ DecryptionResult CDM_Decrypt(
   cdm::InputBuffer_2 buf = RustBufferToCDM(encrypted_buffer);
   DecryptedBlock* decrypted = new DecryptedBlock();
   cdm::Status status = cdm->Decrypt(buf, decrypted);
-  Buffer* buffer = static_cast<Buffer*>(decrypted->DecryptedBuffer());
+  if (status != cdm::kSuccess) {
+    DecryptionResult result = { status, nullptr, 0, 0 };
+    return result;
+  }
+  Buffer* buffer = dynamic_cast<Buffer*>(decrypted->DecryptedBuffer());
   DecryptionResult result = { status, buffer->Data(), buffer->Capacity(), buffer->Size() };
   delete decrypted;
   delete buffer;
