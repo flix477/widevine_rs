@@ -90,7 +90,14 @@ void Host_10::OnSessionKeysChange(
   const cdm::KeyInformation* keys_info,
   uint32_t keys_info_count
 ) {
-  std::cout << "OnSessionKeysChange";
+  this->callback->on_session_keys_change(
+    session_id,
+    session_id_size,
+    has_additional_usable_key,
+    keys_info,
+    keys_info_count,
+    this->target
+  );
 }
 
 void Host_10::OnExpirationChange(
@@ -98,7 +105,12 @@ void Host_10::OnExpirationChange(
   uint32_t session_id_size,
   cdm::Time new_expiry_time
 ) {
-  std::cout << "OnExpirationChange";
+  this->callback->on_expiration_change(
+    session_id,
+    session_id_size,
+    new_expiry_time,
+    this->target
+  );
 }
 
 void Host_10::OnSessionClosed(

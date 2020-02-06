@@ -12,7 +12,7 @@ use host::Host;
 use library::Library;
 use promise_set::{PromiseResultData, PromiseSet, RejectionInfo, INITIALIZED_PROMISE_ID};
 use std::sync::mpsc::Sender;
-use types::{InitDataType, SessionMessage, SessionType};
+use types::{InitDataType, SessionEvent, SessionType};
 
 #[derive(Clone, Debug)]
 pub enum InitializeCDMError {
@@ -79,10 +79,10 @@ impl WidevineAPI {
         session_type: SessionType,
         init_data_type: InitDataType,
         init_data: Vec<u8>, // TODO: using slice instead gives E0700
-        sender: Sender<SessionMessage>,
+        sender: Sender<SessionEvent>,
     ) -> Result<String, CreateSessionError> {
         let promise_id = self.promise_set.create();
-        self.host.set_message_sender(sender);
+        self.host.set_event_sender(sender);
         self.cdm
             .create_session(promise_id, session_type, init_data_type, &init_data);
         let result = self.host.get_future(promise_id).await.as_result();

@@ -11,6 +11,8 @@ struct HostCallback {
   void (*on_resolve_new_session)(uint32_t, const char*, uint32_t, void*);
   void (*on_session_message)(const char*, uint32_t, cdm::MessageType, const char*, uint32_t, void*);
   void* (*allocate)(uint32_t);
+  void (*on_expiration_change)(const char*, uint32_t, cdm::Time, void*);
+  void (*on_session_keys_change)(const char*, uint32_t, bool, const cdm::KeyInformation*, uint32_t, void*);
 };
 
 class Host_10: public cdm::Host_10 {

@@ -3,10 +3,13 @@ use crate::promise_set::{
     INITIALIZED_PROMISE_ID,
 };
 use crate::remote_buffer::RemoteBuffer;
-use crate::types::{Exception, MessageType, SessionMessage};
+use crate::types::{
+    CDMKeyInformation, Exception, KeyInformation, KeysChange, MessageType, SessionEvent,
+    SessionEventType, SessionMessage,
+};
 use std::convert::TryInto;
 use std::ffi::CStr;
-use std::os::raw::{c_char, c_uint, c_void};
+use std::os::raw::{c_char, c_double, c_uint, c_void};
 use std::ptr;
 use std::slice;
 use std::sync::mpsc::Sender;
@@ -81,20 +84,17 @@ extern "C" fn on_session_message(
     message_length: c_uint,
     target: *mut c_void,
 ) {
-    let target = target as *mut Host;
     let session_id = unsafe { CStr::from_ptr(session_id) }.to_string_lossy();
     let content: &[u8] = unsafe { slice::from_raw_parts(message, message_length as usize) };
-    let message = SessionMessage {
+    let event = SessionEvent {
         session_id: session_id.to_string(),
-        message_type,
-        message: content.to_vec(),
+        data: SessionEventType::Message(SessionMessage {
+            message_type,
+            content: content.to_vec(),
+        }),
     };
 
-    unsafe {
-        if let Some(ref sender) = (*target).message_sender {
-            sender.send(message).unwrap();
-        }
-    };
+    unsafe { send_event(event, target as *mut Host) }
 }
 
 // TODO: buffer pool
@@ -103,10 +103,53 @@ extern "C" fn allocate(capacity: c_uint) -> *mut c_void {
     Box::into_raw(buffer) as *mut c_void
 }
 
-pub unsafe fn wake_promise(promise_id: usize, result: PromiseResult, target: *mut Host) {
+extern "C" fn on_expiration_change(
+    session_id: *const c_char,
+    _session_id_size: c_uint,
+    new_expiry_time: c_double,
+    target: *mut c_void,
+) {
+    let session_id = unsafe { CStr::from_ptr(session_id) }.to_string_lossy();
+    let event = SessionEvent {
+        session_id: session_id.to_string(),
+        data: SessionEventType::ExpirationChange(new_expiry_time),
+    };
+    unsafe { send_event(event, target as *mut Host) }
+}
+
+extern "C" fn on_session_keys_change(
+    session_id: *const c_char,
+    _session_id_size: c_uint,
+    has_additional_usable_key: bool,
+    keys_info: *const CDMKeyInformation,
+    keys_info_count: c_uint,
+    target: *mut c_void,
+) {
+    let session_id = unsafe { CStr::from_ptr(session_id) }.to_string_lossy();
+    let keys_info: &[CDMKeyInformation] =
+        unsafe { slice::from_raw_parts(keys_info, keys_info_count as usize) };
+    let keys_info: Vec<KeyInformation> = keys_info.into_iter().cloned().map(|x| x.into()).collect();
+
+    let event = SessionEvent {
+        session_id: session_id.to_string(),
+        data: SessionEventType::KeysChange(KeysChange {
+            has_additional_usable_key,
+            keys_info,
+        }),
+    };
+    unsafe { send_event(event, target as *mut Host) }
+}
+
+unsafe fn wake_promise(promise_id: usize, result: PromiseResult, target: *mut Host) {
     let mut pm = (*target).promise_manager.lock().unwrap();
     pm.finished_promises.insert(promise_id, result);
     pm.wake(promise_id);
+}
+
+unsafe fn send_event(event: SessionEvent, target: *mut Host) {
+    if let Some(ref sender) = (*target).event_sender {
+        sender.send(event).unwrap();
+    }
 }
 
 #[repr(C)]
@@ -119,6 +162,9 @@ pub struct HostCallback {
     on_session_message:
         extern "C" fn(*const c_char, c_uint, MessageType, *const u8, c_uint, *mut c_void),
     allocate: extern "C" fn(c_uint) -> *mut c_void,
+    on_expiration_change: extern "C" fn(*const c_char, c_uint, c_double, *mut c_void),
+    on_session_keys_change:
+        extern "C" fn(*const c_char, c_uint, bool, *const CDMKeyInformation, c_uint, *mut c_void),
 }
 
 impl Default for HostCallback {
@@ -130,6 +176,8 @@ impl Default for HostCallback {
             on_resolve_new_session,
             on_session_message,
             allocate,
+            on_expiration_change,
+            on_session_keys_change,
         }
     }
 }
@@ -141,7 +189,7 @@ pub struct Host {
     initialized: bool,
     callback: Box<HostCallback>,
     promise_manager: Arc<Mutex<PromiseManager>>,
-    message_sender: Option<Sender<SessionMessage>>,
+    event_sender: Option<Sender<SessionEvent>>,
     remote_buffer: Box<RemoteBuffer>,
 }
 
@@ -152,7 +200,7 @@ impl Default for Host {
             initialized: false,
             callback: Box::new(HostCallback::default()),
             promise_manager: Arc::new(Mutex::new(PromiseManager::default())),
-            message_sender: None,
+            event_sender: None,
             remote_buffer: Box::new(RemoteBuffer::default()),
         }
     }
@@ -184,8 +232,8 @@ impl Host {
         }
     }
 
-    pub fn set_message_sender(&mut self, sender: Sender<SessionMessage>) {
-        self.message_sender = Some(sender);
+    pub fn set_event_sender(&mut self, sender: Sender<SessionEvent>) {
+        self.event_sender = Some(sender);
     }
 }
 

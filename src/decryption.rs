@@ -59,8 +59,8 @@ impl Into<CDMInputBuffer> for InputBuffer<'_> {
             key_id_size: self.key_id.len() as u32,
             iv: self.iv.as_ptr(),
             iv_size: self.iv.len() as u32,
-            subsamples: std::ptr::null(), // TODO
-            num_subsamples: 0,            // TODO
+            subsamples: self.subsamples.as_ptr(),
+            num_subsamples: self.subsamples.len() as u32,
             pattern: self.pattern,
             timestamp: self.timestamp,
         }
