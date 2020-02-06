@@ -3,6 +3,7 @@ use crate::promise_set::{
     INITIALIZED_PROMISE_ID,
 };
 use crate::remote_buffer::RemoteBuffer;
+use crate::timer::{Timer, TimerManager};
 use crate::types::{
     CDMKeyInformation, Exception, KeyInformation, KeysChange, MessageType, SessionEvent,
     SessionEventType, SessionMessage,
@@ -12,7 +13,7 @@ use std::ffi::CStr;
 use std::os::raw::{c_char, c_double, c_uint, c_void};
 use std::ptr;
 use std::slice;
-use std::sync::mpsc::Sender;
+use std::sync::mpsc::{Sender, TryIter};
 use std::sync::Arc;
 use std::sync::Mutex;
 
@@ -140,6 +141,11 @@ extern "C" fn on_session_keys_change(
     unsafe { send_event(event, target as *mut Host) }
 }
 
+extern "C" fn set_timer(delay_ms: u64, context: *mut c_void, target: *mut c_void) {
+    let target = target as *mut Host;
+    unsafe { (*target).timer_manager.new_timer(delay_ms, context) }
+}
+
 unsafe fn wake_promise(promise_id: usize, result: PromiseResult, target: *mut Host) {
     let mut pm = (*target).promise_manager.lock().unwrap();
     pm.finished_promises.insert(promise_id, result);
@@ -165,6 +171,7 @@ pub struct HostCallback {
     on_expiration_change: extern "C" fn(*const c_char, c_uint, c_double, *mut c_void),
     on_session_keys_change:
         extern "C" fn(*const c_char, c_uint, bool, *const CDMKeyInformation, c_uint, *mut c_void),
+    set_timer: extern "C" fn(u64, *mut c_void, *mut c_void),
 }
 
 impl Default for HostCallback {
@@ -178,6 +185,7 @@ impl Default for HostCallback {
             allocate,
             on_expiration_change,
             on_session_keys_change,
+            set_timer,
         }
     }
 }
@@ -191,6 +199,7 @@ pub struct Host {
     promise_manager: Arc<Mutex<PromiseManager>>,
     event_sender: Option<Sender<SessionEvent>>,
     remote_buffer: Box<RemoteBuffer>,
+    timer_manager: TimerManager,
 }
 
 impl Default for Host {
@@ -202,6 +211,7 @@ impl Default for Host {
             promise_manager: Arc::new(Mutex::new(PromiseManager::default())),
             event_sender: None,
             remote_buffer: Box::new(RemoteBuffer::default()),
+            timer_manager: TimerManager::default(),
         }
     }
 }
@@ -234,6 +244,10 @@ impl Host {
 
     pub fn set_event_sender(&mut self, sender: Sender<SessionEvent>) {
         self.event_sender = Some(sender);
+    }
+
+    pub fn timer_iter(&mut self) -> TryIter<Timer> {
+        self.timer_manager.try_iter()
     }
 }
 

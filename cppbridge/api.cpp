@@ -153,6 +153,11 @@ DecryptionResult CDM_Decrypt(
   return result;
 }
 
+void CDM_TimerExpired(cdm::ContentDecryptionModule_10* cdm, void* context) {
+  if (!cdm) return;
+  cdm->TimerExpired(context);
+}
+
 Host_10* CreateHost(void* target, HostCallback* callback, RemoteBuffer* remote_buffer) {
   if (!target)
     return nullptr;

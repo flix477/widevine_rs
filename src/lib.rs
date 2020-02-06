@@ -4,6 +4,7 @@ mod host;
 mod library;
 mod promise_set;
 mod remote_buffer;
+mod timer;
 pub mod types;
 
 use cdm::CDM;
@@ -110,6 +111,13 @@ impl WidevineAPI {
 
     pub fn decrypt(&mut self, input_buffer: InputBuffer) -> Result<Vec<u8>, Status> {
         self.cdm.decrypt(input_buffer)
+    }
+
+    // TODO: delete this and outsource timer management to library users?
+    pub fn update(&mut self) {
+        for timer in self.host.timer_iter() {
+            self.cdm.timer_expired(timer);
+        }
     }
 }
 

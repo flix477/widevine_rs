@@ -65,6 +65,10 @@ extern "C" {
     cdm::ContentDecryptionModule_10* cdm,
     InputBuffer encrypted_buffer
   );
+  void CDM_TimerExpired(
+    cdm::ContentDecryptionModule_10* cdm,
+    void* context
+  );
   Host_10* CreateHost(void* target, HostCallback* callback, RemoteBuffer* remote_buffer);
   void DeinitializeCDM(cdm::ContentDecryptionModule_10* cdm);
   void DeinitializeLibrary(Library* lib);

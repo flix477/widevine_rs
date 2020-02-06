@@ -14,7 +14,7 @@ cdm::Buffer* Host_10::Allocate(uint32_t capacity) {
 }
 
 void Host_10::SetTimer(int64_t delay_ms, void* context) {
-  std::cout << "SetTimer";
+  this->callback->set_timer(delay_ms, context, this->target);
 }
 
 cdm::Time Host_10::GetCurrentWallTime() {

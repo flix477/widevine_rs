@@ -1,6 +1,7 @@
 use crate::decryption::{CDMInputBuffer, InputBuffer};
 use crate::decryption::{DecryptionResult, Status};
 use crate::host::Host;
+use crate::timer::Timer;
 use crate::types::{InitDataType, SessionType};
 use crate::Library;
 use std::convert::TryInto;
@@ -33,6 +34,7 @@ extern "C" {
         response_size: c_uint,
     );
     fn CDM_Decrypt(cdm: *mut c_void, encrypted_buffer: CDMInputBuffer) -> DecryptionResult;
+    fn CDM_TimerExpired(cdm: *mut c_void, context: *mut c_void);
     fn DeinitializeCDM(cdm: *mut c_void);
 }
 
@@ -106,6 +108,10 @@ impl CDM {
         } else {
             Err(result.status)
         }
+    }
+
+    pub fn timer_expired(&mut self, timer: Timer) {
+        unsafe { CDM_TimerExpired(self.0, timer.context) }
     }
 }
 
