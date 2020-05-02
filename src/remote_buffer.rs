@@ -6,9 +6,9 @@ use std::os::raw::{c_uchar, c_uint, c_void};
 pub struct RemoteBuffer {
     destroy: extern "C" fn(*mut c_void),
     capacity: extern "C" fn(*const c_void) -> c_uint,
+    data: extern "C" fn(*mut c_void) -> *mut c_uchar,
     size: extern "C" fn(*const c_void) -> c_uint,
     set_size: extern "C" fn(c_uint, *mut c_void),
-    data: extern "C" fn(*mut c_void) -> *mut c_uchar,
 }
 
 impl Default for RemoteBuffer {

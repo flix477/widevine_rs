@@ -2,10 +2,8 @@
 #include <vector>
 #include "buffer.h"
 
-Buffer::Buffer(RemoteBuffer* remote, void* target) {
-  this->remote = remote;
-  this->target = target;
-}
+Buffer::Buffer(RemoteBuffer* remote, void* target)
+  : remote(remote), target(target) {}
 
 void Buffer::Destroy() {
   this->remote->destroy(this->target);

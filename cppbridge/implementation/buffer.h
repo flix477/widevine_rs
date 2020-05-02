@@ -8,8 +8,8 @@ struct RemoteBuffer {
   void (*destroy)(void*);
   uint32_t (*capacity)(void*);
   uint8_t* (*data)(void*);
-  void (*set_size)(uint32_t, void*);
   uint32_t (*size)(void*);
+  void (*set_size)(uint32_t, void*);
 };
 
 class Buffer: public cdm::Buffer {

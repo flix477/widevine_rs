@@ -1,3 +1,4 @@
+#include <iostream>
 #include "decrypted_block.h"
 
 DecryptedBlock::DecryptedBlock()

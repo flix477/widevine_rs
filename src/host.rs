@@ -100,7 +100,7 @@ extern "C" fn on_session_message(
 
 // TODO: buffer pool
 extern "C" fn allocate(capacity: c_uint) -> *mut c_void {
-    let buffer: Box<Vec<u8>> = Box::new(Vec::with_capacity(capacity as usize));
+    let buffer: Box<Vec<u8>> = Box::new(vec![0; capacity as usize]);
     Box::into_raw(buffer) as *mut c_void
 }
 

@@ -3,7 +3,7 @@
 #include <dlfcn.h>
 #include "api.h"
 
-const int VERSION = 10;
+#define VERSION 10
 const char* KEY_SYSTEM = "com.widevine.alpha";
 const int KEY_SYSTEM_LENGTH = std::strlen(KEY_SYSTEM);
 
@@ -146,7 +146,8 @@ DecryptionResult CDM_Decrypt(
     DecryptionResult result = { status, nullptr, 0, 0 };
     return result;
   }
-  Buffer* buffer = dynamic_cast<Buffer*>(decrypted->DecryptedBuffer());
+  cdm::Buffer* cdmBuffer = decrypted->DecryptedBuffer();
+  Buffer* buffer = dynamic_cast<Buffer*>(cdmBuffer);
   DecryptionResult result = { status, buffer->Data(), buffer->Capacity(), buffer->Size() };
   delete decrypted;
   delete buffer;
